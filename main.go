@@ -40,6 +40,9 @@ func main() {
 
 	go broadcaster()
 
+	// Start Telegram bot in background goroutine
+	go startTelegramBot()
+
 	log.Println("Starting server on :8080")
 	router.Run(":8080")
 }
