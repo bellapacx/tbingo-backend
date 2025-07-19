@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 
@@ -31,7 +34,7 @@ func startTelegramBot() {
 			continue
 		}
 
-		user := update.Message.From
+		// Removed unused 'user' variable to fix build error
 
 		if update.Message.IsCommand() {
 			switch update.Message.Command() {
@@ -57,9 +60,25 @@ func startTelegramBot() {
 
 			bot.Send(msg)
 
-			// Call your backend /join
-			// You can make HTTP POST to localhost:8080/join or your Render URL here
+			// Call your backend /join asynchronously
 			go joinBingoServer(phone, strconv.FormatInt(chatID, 10))
 		}
 	}
+}
+
+func joinBingoServer(phone string, chatID string) {
+	data := map[string]string{
+		"phone":  phone,
+		"chatId": chatID,
+	}
+	payload, _ := json.Marshal(data)
+
+	resp, err := http.Post("https://tbingo-backend.onrender.com/join", "application/json", bytes.NewBuffer(payload))
+	if err != nil {
+		log.Println("Failed to join bingo:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	log.Println("User joined successfully:", resp.Status)
 }
